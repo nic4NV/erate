@@ -16,6 +16,9 @@ use yii\validators\DateValidator;
  */
 class RubDynamic extends \yii\db\ActiveRecord
 {
+    const RUB_ABR = 'rub';
+    const DB_RATIO = 10000;
+    const PRECISION = 4;
     /**
      * {@inheritdoc}
      */
@@ -49,5 +52,52 @@ class RubDynamic extends \yii\db\ActiveRecord
             'btc' => 'btc',
             'chf' => 'chf'
         ];
+    }
+
+    /**
+     * @param string $pair
+     * @return array|void
+     */
+    private function getPartsOfPair(string $pair) {
+        $parts = str_split(strtolower($pair), 3);
+        if(
+            count($parts) == 2 &&
+            $parts[0] !== $parts[1] &&
+            ($parts[0] == self::RUB_ABR || isset($this->{$parts[0]})) &&
+            ($parts[1] == self::RUB_ABR || isset($this->{$parts[1]}))
+        )
+            return $parts;
+        else
+            return;
+    }
+
+    /**
+     * @param string $pair
+     * @return bool|float
+     */
+    public function getRate(string $pair) {
+        if($parts = $this->getPartsOfPair($pair)) {
+            if($parts[0] == self::RUB_ABR) // rub/eur
+                $rate = self::DB_RATIO / $this->{$parts[1]};
+            elseif($parts[1] == self::RUB_ABR) // usd/rub
+                $rate = $this->{$parts[0]} / self::DB_RATIO;
+            else $rate = $this->{$parts[0]} / $this->{$parts[1]};
+
+            return isset($rate) ? round($rate, self::PRECISION) : false;
+        }
+        return;
+    }
+
+    public static function buildDynamic(array $models, string $pair): array {
+        $dynamic = [];
+        foreach($models as $num=>$model) {
+            if($num == 0) {
+                $dynamic[$num]['rate'] = $model->getRate($pair);
+            } else {
+                $dynamic[$num]['rate'] = $model->getRate($pair);
+                $dynamic[$num]['changing'] = round($dynamic[$num]['rate'] - $dynamic[$num - 1]['rate'], self::PRECISION);
+            }
+        }
+        return $dynamic;
     }
 }

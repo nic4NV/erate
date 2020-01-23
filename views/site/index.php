@@ -6,7 +6,6 @@ $this->title = 'My Yii Application';
 ?>
 <div class="site-index">
     <div class="body-content">
-
         <div class="row">
             <div class="col-lg-4">
                 <?php if(Yii::$app->user->isGuest): ?>
@@ -16,6 +15,19 @@ $this->title = 'My Yii Application';
                 <?php endif; ?>
             </div>
         </div>
-
+        <div class="row">
+            <div class="col-lg-4">
+                <div>EUR/USD</div>
+                <div><?= $curRate->getRate('eurusd'); ?></div>
+            </div>
+            <div class="col-lg-4">
+                <div>BTC/USD</div>
+                <div><?= $curRate->getRate('btcusd'); ?></div>
+            </div>
+            <div class="col-lg-4">
+                <div>USD/CHF</div>
+                <div><?= $curRate->getRate('usdchf'); ?></div>
+            </div>
+        </div>
     </div>
 </div>
